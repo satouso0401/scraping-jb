@@ -8,7 +8,7 @@ import lxml
 
 def get_auth_cookie() -> dict:
     # 保存済みのcookieが使えるかテスト
-    cookies = json.load(open("auth_cookies.json", "r", encoding="utf-8"))
+    cookies = json.load(open("../auth_cookies.json", "r", encoding="utf-8"))
     res = requests.get("https://jbungakukan.shogakukan.co.jp/", cookies=cookies)
     soup = BeautifulSoup(res.content, 'html.parser')
     title = soup.find("title")
@@ -18,7 +18,7 @@ def get_auth_cookie() -> dict:
         return cookies
 
     print("認証切れなので認証用のcookieを取得する")
-    password_json = json.load(open("auth.json", "r"))
+    password_json = json.load(open("../auth.json", "r"))
     email = password_json["email"]
     password = password_json["password"]
 
@@ -42,7 +42,7 @@ def get_auth_cookie() -> dict:
                         data=data, allow_redirects=False)
 
     # cookieの保存
-    with open("auth_cookies.json", mode="wt", encoding="utf-8") as f:
+    with open("../auth_cookies.json", mode="wt", encoding="utf-8") as f:
         json.dump(res.cookies.get_dict(), f, indent=2)
 
     return res.cookies.get_dict()
@@ -73,7 +73,7 @@ def get_book_links(auth_cookie: dict) -> list[BookLink]:
 
 
 def download_book(auth_cookie: dict, book_id: str) -> None:
-    local_base = "download/" + book_id
+    local_base = "../download/" + book_id
 
     if not os.path.exists(local_base):
         os.makedirs(local_base)
@@ -82,6 +82,7 @@ def download_book(auth_cookie: dict, book_id: str) -> None:
     res = requests.get(base_url + "/bibi/?book=" + book_id, cookies=auth_cookie)
     soup = BeautifulSoup(res.content, 'html.parser')
     bookshelf = soup.select_one('body')["data-bibi-bookshelf"]
+    print("bookshelf: " + bookshelf)
 
     download_base_url = base_url + bookshelf + "/" + book_id
 
@@ -104,16 +105,16 @@ def download_book(auth_cookie: dict, book_id: str) -> None:
 
 
 
-def download_file(auth_cookie: dict, download_base_url: str, download_path: str, local_base) -> str:
+def download_file(auth_cookie: dict, download_base_url: str, item_path: str, local_base) -> str:
     # 保存先のフォルダの作成
-    save_path = local_base + download_path
+    save_path = local_base + item_path
     save_directory = os.path.dirname(save_path)
     if not os.path.exists(save_directory):
         os.makedirs(save_directory)
 
     # ダウンロード
-    print("download: " + download_path)
-    res = requests.get(download_base_url + download_path, cookies=auth_cookie, stream=True)
+    print("download: " + item_path)
+    res = requests.get(download_base_url + item_path, cookies=auth_cookie, stream=True)
 
     # if download_path.endswith("xhtml"):
     #     with open(save_path, 'w', encoding="utf-8") as f:
@@ -129,7 +130,18 @@ def download_file(auth_cookie: dict, download_base_url: str, download_path: str,
     return save_path
 
 
+def decrypt(bookshelf: str, key_suffix: str, text: str) -> str:
+    # TODO bookshelfからkeyを抜き出す
 
+    # TODO 変換mapを作る
+
+    # TODO text内の変換対象を置換する
+    # TODO     変換mapを使った後にcodepointから文字に変換する
+
+    return text
+
+# config
+key_suffix = "94f885c659"
 base_url = "https://jbungakukan.shogakukan.co.jp"
 
 
@@ -141,8 +153,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # test()
     main()
-    # get_login_page()
-    # login()
-    # main()
